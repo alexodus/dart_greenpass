@@ -3,3 +3,5 @@ Questa classe Dart è stata scritta prendendo come esempio il codice di partenza
 La repository di partenza https://github.com/loreberti89/flutter_ita_greenpass non riusciva a validare i green pass da tampone e quelli da ex positivi covid. Questa repo è invece completa e comprende tutte le regole per la validazione.
 
 La classe GreenPass è inoltre funzionante offline.
+
+Basta importare le dipendenze dal file pubspec.yaml, copiare e incollare il file greenpass.dart nella propria direcoty lib e utilizzare la classe come visto nel file example.dart nella cartella bin di questo progetto.
