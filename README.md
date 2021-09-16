@@ -5,3 +5,8 @@ La repository di partenza https://github.com/loreberti89/flutter_ita_greenpass n
 La classe GreenPass è inoltre funzionante offline.
 
 Basta importare le dipendenze dal file pubspec.yaml, copiare e incollare il file greenpass.dart nella propria direcoty lib e utilizzare la classe come visto nel file example.dart nella cartella bin di questo progetto.
+
+Questa classe è utilizzabile per:
+1. Applicazioni da console PC in Dart
+2. Dart per il Web
+3. Flutter per tutte le piattaforme (Android, IOS, Web, Windows, Linux, MACOS)
