@@ -44,7 +44,7 @@ class GreenPass {
     {
       "name": "vaccine_end_day_complete",
       "type": "EU/1/20/1525",
-      "value": "270"
+      "value": "365"
     },
     {
       "name": "vaccine_start_day_complete",
@@ -54,7 +54,7 @@ class GreenPass {
     {
       "name": "vaccine_end_day_not_complete",
       "type": "EU/1/20/1525",
-      "value": "270"
+      "value": "365"
     },
     {
       "name": "vaccine_start_day_not_complete",
@@ -64,7 +64,7 @@ class GreenPass {
     {
       "name": "vaccine_end_day_complete",
       "type": "EU/1/21/1529",
-      "value": "270"
+      "value": "365"
     },
     {
       "name": "vaccine_start_day_complete",
@@ -84,7 +84,7 @@ class GreenPass {
     {
       "name": "vaccine_end_day_complete",
       "type": "EU/1/20/1507",
-      "value": "270"
+      "value": "365"
     },
     {
       "name": "vaccine_start_day_complete",
@@ -104,7 +104,7 @@ class GreenPass {
     {
       "name": "vaccine_end_day_complete",
       "type": "EU/1/20/1528",
-      "value": "270"
+      "value": "365"
     },
     {
       "name": "vaccine_start_day_complete",
