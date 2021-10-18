@@ -23,6 +23,7 @@ class GreenPass {
 
   late String dateTimeOfSampleCollection;
   late String testResult;
+  late String typeOfTest;
 
   String prefix = "HC1:";
   late String ci;
@@ -38,6 +39,14 @@ class GreenPass {
   final vaccineEndDayNotComplete = "vaccine_end_day_not_complete";
   final vaccineStartDayComplete = "vaccine_start_day_complete";
   final vaccineEndDayComplete = "vaccine_end_day_complete";
+
+  final detected = "260373001";
+  final notValidYet = "not valid yet";
+  final valid = "valid";
+  final notValid = "not_valid";
+  final notGreenPassReader = "not_a_green pass";
+  final partiallyValid = "valid only in Italy";
+  final testMolecular = "LP6464-4";
 
   //Regole per calcolare la scadenza del green pass dal link https://get.dgc.gov.it/v1/dgc/settings
   final rules = [
@@ -139,7 +148,7 @@ class GreenPass {
     {
       "name": "molecular_test_end_hours",
       "type": "GENERIC",
-      "value": "48",
+      "value": "72",
     },
     {
       "name": "recovery_cert_start_day",
@@ -183,7 +192,8 @@ class GreenPass {
     if (payload.containsKey("t")) {
       this.ci = payload["t"].first["ci"];
       this.dateTimeOfSampleCollection = payload["t"].first["sc"];
-      this.testResult = payload["t"].first["sc"];
+      this.testResult = payload["t"].first["tr"];
+      this.typeOfTest = payload["t"].first["tt"];
     }
 
     this.version = payload["ver"];
@@ -266,31 +276,58 @@ class GreenPass {
     return int.parse(rule["value"]);
   }
 
+  int getMolecularTestStartHour(rules) {
+    late var rule;
+    for (int i = 0; i < rules.length; i++)
+      if (rules[i]["name"] == moleculaTestStartHour) rule = rules[i];
+    return int.parse(rule["value"]);
+  }
+
+  int getMolecularTestEndHour(rules) {
+    late var rule;
+    for (int i = 0; i < rules.length; i++)
+      if (rules[i]["name"] == moleculaTestEndHour) rule = rules[i];
+    return int.parse(rule["value"]);
+  }
+
   Future<dynamic> validateTestGreenpass() async {
     String message = "";
     bool result = false;
     var now = DateTime.now();
-    if (this.testResult == "DETECTED") {
-      message = "not valid";
+    if (this.testResult == detected) {
+      message = notValid;
     } else {
       try {
         var odtDateTimeOfCollection =
             DateTime.parse(dateTimeOfSampleCollection);
-        DateTime startDate = odtDateTimeOfCollection
-            .add(Duration(hours: getRapidTestStartHour(rules)));
-        DateTime endDate = odtDateTimeOfCollection
-            .add(Duration(hours: getRapidTestEndHour(rules)));
+        DateTime startDate;
+        DateTime endDate;
+
+        if (typeOfTest == testMolecular) {
+          startDate = odtDateTimeOfCollection
+              .add(Duration(hours: getMolecularTestStartHour(rules)));
+          endDate = odtDateTimeOfCollection
+              .add(Duration(hours: getMolecularTestEndHour(rules)));
+        } else {
+          startDate = odtDateTimeOfCollection
+              .add(Duration(hours: getRapidTestStartHour(rules)));
+          endDate = odtDateTimeOfCollection
+              .add(Duration(hours: getRapidTestEndHour(rules)));
+        }
+
         if (startDate.isAfter(now)) {
-          message = "not valid yet";
+          result = false;
+          message = notValidYet;
         } else if (now.isAfter(endDate)) {
-          message = "not valid";
+          result = false;
+          message = notValid;
         } else {
           result = true;
-          message = "valid";
+          message = valid;
         }
       } catch (e) {
         result = false;
-        message = "not valid";
+        message = notGreenPassReader;
       }
     }
     return {"result": result, "message": message};
@@ -304,74 +341,70 @@ class GreenPass {
       DateTime startDate = DateTime.parse(certificateValidFrom);
       DateTime endDate = DateTime.parse(certificateValidUntil);
       if (startDate.isAfter(now)) {
-        message = "not valid yet";
+        message = notValidYet;
       } else if (now.isAfter(endDate)) {
-        message = "not valid";
+        message = notValid;
       } else {
         result = true;
-        message = "valid";
+        message = valid;
       }
     } catch (e) {
       result = false;
-      message = "not valid";
+      message = notValid;
     }
     return {"result": result, "message": message};
   }
 
   Future<dynamic> validateVaccineGreenpass() async {
     var now = DateTime.now();
-    try {
-      String message = "";
-      bool result = false;
-      var rule = getVaccineEndDayComplete(this.rules, vaccineType);
-      if (rule != null) {
-        try {
-          if (doseNumber < totalSeriesOfDoses) {
-            var daysStart =
-                getVaccineStartDayNotComplete(this.rules, vaccineType)["value"];
-            var daysEnd =
-                getVaccineEndDayNotComplete(this.rules, vaccineType)["value"];
-            DateTime startDate = DateTime.parse(dateOfVaccination)
-                .add(Duration(days: int.parse(daysStart)));
-            DateTime.parse(dateOfVaccination)
-                .add(Duration(days: int.parse(daysEnd)));
-            if (startDate.isAfter(now)) {
-              message = "not valid yet";
-            } else {
-              result = true;
-              message = "partially valid";
-            }
-          } else if (doseNumber >= totalSeriesOfDoses) {
-            var daysStart =
-                getVaccineStartDayComplete(this.rules, vaccineType)["value"];
-            var daysEnd =
-                getVaccineEndDayComplete(this.rules, vaccineType)["value"];
-            DateTime startDate = DateTime.parse(dateOfVaccination)
-                .add(new Duration(days: int.parse(daysStart)));
-            DateTime.parse(dateOfVaccination)
-                .add(new Duration(days: int.parse(daysEnd)));
-            if (startDate.isAfter(now)) {
-              message = "not valid yet";
-            } else {
-              result = true;
-              message = "valid";
-            }
+
+    String message = "";
+    bool result = false;
+    var rule = getVaccineEndDayComplete(this.rules, vaccineType);
+    if (rule != null) {
+      try {
+        if (doseNumber < totalSeriesOfDoses) {
+          var daysStart =
+              getVaccineStartDayNotComplete(this.rules, vaccineType)["value"];
+          var daysEnd =
+              getVaccineEndDayNotComplete(this.rules, vaccineType)["value"];
+          DateTime startDate = DateTime.parse(dateOfVaccination)
+              .add(Duration(days: int.parse(daysStart)));
+          DateTime endDate = DateTime.parse(dateOfVaccination)
+              .add(Duration(days: int.parse(daysEnd)));
+          if (startDate.isAfter(now)) {
+            message = notValidYet;
+          } else if (now.isAfter(endDate)) {
+            message = notValid;
           } else {
-            result = false;
-            message = "not valid";
+            result = true;
+            message = partiallyValid;
           }
-        } catch (e) {
-          result = false;
-          message = "not valid";
+        } else if (doseNumber >= totalSeriesOfDoses) {
+          var daysStart =
+              getVaccineStartDayComplete(this.rules, vaccineType)["value"];
+          var daysEnd =
+              getVaccineEndDayComplete(this.rules, vaccineType)["value"];
+          DateTime startDate = DateTime.parse(dateOfVaccination)
+              .add(new Duration(days: int.parse(daysStart)));
+          DateTime.parse(dateOfVaccination)
+              .add(new Duration(days: int.parse(daysEnd)));
+          if (startDate.isAfter(now)) {
+            message = notValidYet;
+          } else {
+            result = true;
+            message = valid;
+          }
+        } else {
+          message = notValid;
         }
-      } else {
-        result = false;
-        message = "not valid";
+      } catch (e) {
+        message = notValid;
       }
-      return {"result": result, "message": message};
-    } catch (e) {
-      return {"result": false, "message": e};
+    } else {
+      message = notValid;
     }
+    return {"result": result, "message": message};
   }
 
   Future<dynamic> validateGreenpass(var payload) async {
@@ -382,7 +415,7 @@ class GreenPass {
     } else if (payload.containsKey("t")) {
       return validateTestGreenpass();
     } else {
-      return {"result": false, "message": "not valid"};
+      return {"result": false, "message": notValid};
     }
   }
 }
