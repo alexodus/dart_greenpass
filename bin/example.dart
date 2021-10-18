@@ -6,17 +6,14 @@ void main() {
     //Passo invece di greenPassString la stringa ottenuta dalla scansione di un green pass. Per ottenere la stringa, scansiona il green pass con un lettore qr e copia e incolla la stringa ottenuta al posto di greenPassString
     var payload = greenPass.decodeFromRaw("greenPassString");
     greenPass.validateGreenpass(payload).then((value) {
-      if (value['message'] == 'valid') {
+      if (value['result'] == true) {
         //Il green pass non è scaduto
         print("green pass valido");
         print(greenPass.name + " " + greenPass.surname + " " + greenPass.dob);
-      } else if (value['message'] == 'partially valid') {
+      } else{
         //Il green pass è scaduto
         print("green pass scaduto");
         print(greenPass.name + " " + greenPass.surname + " " + greenPass.dob);
-      } else {
-        //Il green pass non è valido
-        print("green pass non valido");
       }
     });
   } catch (e) {
