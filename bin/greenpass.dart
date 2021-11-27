@@ -4,33 +4,36 @@ import 'package:cbor/cbor.dart';
 import 'package:dart_base45/dart_base45.dart';
 
 class GreenPass {
+  //Dati generici del greenpass
+  String prefix = "HC1:";
   late String raw;
   late List<int> inflated;
   late Map payload;
-  late String name;
+  late bool isSuperGreenPass;
 
+  //Dati generici della persona
+  late String name;
   late String surname;
-  late String version;
   late String dob;
 
+  //Dati relativi al greenpass da vaccino
   late String vaccineType;
   late int doseNumber;
   late int totalSeriesOfDoses;
   late String dateOfVaccination;
 
-  late String certificateValidFrom;
-  late String certificateValidUntil;
-
+  //Dati relativi al greenpass da test
   late String dateTimeOfSampleCollection;
   late String testResult;
   late String typeOfTest;
-
-  String prefix = "HC1:";
   late String ci;
-  late DateTime expiration;
-  
-  late bool isSuperGreenpass;
+  final testMolecular = "LP6464-4";
 
+  //Dati relativi al greenpass da guarigione
+  late String certificateValidFrom;
+  late String certificateValidUntil;
+
+  //Dati generici per il responso positivo o negativo
   final recoveryCertStartDay = "recovery_cert_start_day";
   final recoveryCertEndDay = "recovery_cert_end_day";
   final moleculaTestStartHour = "molecular_test_start_hours";
@@ -41,14 +44,12 @@ class GreenPass {
   final vaccineEndDayNotComplete = "vaccine_end_day_not_complete";
   final vaccineStartDayComplete = "vaccine_start_day_complete";
   final vaccineEndDayComplete = "vaccine_end_day_complete";
-
   final detected = "260373001";
   final notValidYet = "not valid yet";
   final valid = "valid";
   final notValid = "not_valid";
-  final notGreenPassReader = "not_a_green pass";
+  final notGreenpass = "not_a_green pass";
   final partiallyValid = "valid only in Italy";
-  final testMolecular = "LP6464-4";
 
   //Regole per calcolare la scadenza del green pass dal link https://get.dgc.gov.it/v1/dgc/settings
   final rules = [
@@ -175,15 +176,13 @@ class GreenPass {
     cbor.clearDecodeStack();
     cbor.decodeFromList(rawDecodification![0][2]);
     Map decodedData = Map<dynamic, dynamic>.from(cbor.getDecodedData()![0]);
-    this.expiration =
-        DateTime.fromMillisecondsSinceEpoch(decodedData[4] * 1000);
     Map payload = Map<String, dynamic>.from(decodedData[-260][1]);
 
     if (payload.containsKey("r")) {
       this.ci = payload["r"].first["ci"];
       this.certificateValidFrom = payload["r"].first["df"];
       this.certificateValidUntil = payload["r"].first["du"];
-      this.isSuperGreenpass = true;
+      this.isSuperGreenPass = true;
     }
     if (payload.containsKey("v")) {
       this.vaccineType = payload["v"].first["mp"];
@@ -191,17 +190,16 @@ class GreenPass {
       this.dateOfVaccination = payload["v"].first["dt"];
       this.totalSeriesOfDoses = payload["v"].first["sd"];
       this.ci = payload["v"].first["ci"];
-      this.isSuperGreenpass = true;
+      this.isSuperGreenPass = true;
     }
     if (payload.containsKey("t")) {
       this.ci = payload["t"].first["ci"];
       this.dateTimeOfSampleCollection = payload["t"].first["sc"];
       this.testResult = payload["t"].first["tr"];
       this.typeOfTest = payload["t"].first["tt"];
-      this.isSuperGreenpass = false;
+      this.isSuperGreenPass = false;
     }
 
-    this.version = payload["ver"];
     this.dob = payload["dob"];
     this.name = payload["nam"]["gn"];
     this.surname = payload["nam"]["fn"];
@@ -332,10 +330,13 @@ class GreenPass {
         }
       } catch (e) {
         result = false;
-        message = notGreenPassReader;
+        message = notGreenpass;
       }
     }
-    return {"result": result, "message": message};
+    return {
+      "result": result,
+      "message": message,
+    };
   }
 
   Future<dynamic> validateRecoveryGreenpass() async {
@@ -357,12 +358,14 @@ class GreenPass {
       result = false;
       message = notValid;
     }
-    return {"result": result, "message": message};
+    return {
+      "result": result,
+      "message": message,
+    };
   }
 
   Future<dynamic> validateVaccineGreenpass() async {
     var now = DateTime.now();
-
     String message = "";
     bool result = false;
     var rule = getVaccineEndDayComplete(this.rules, vaccineType);
@@ -409,9 +412,11 @@ class GreenPass {
     } else {
       message = notValid;
     }
-    return {"result": result, "message": message};
+    return {
+      "result": result,
+      "message": message,
+    };
   }
-
 
   Future<dynamic> validateGreenpass(var payload) async {
     if (payload.containsKey("r")) {
