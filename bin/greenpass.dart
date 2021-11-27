@@ -28,6 +28,8 @@ class GreenPass {
   String prefix = "HC1:";
   late String ci;
   late DateTime expiration;
+  
+  late bool isSuperGreenpass;
 
   final recoveryCertStartDay = "recovery_cert_start_day";
   final recoveryCertEndDay = "recovery_cert_end_day";
@@ -181,6 +183,7 @@ class GreenPass {
       this.ci = payload["r"].first["ci"];
       this.certificateValidFrom = payload["r"].first["df"];
       this.certificateValidUntil = payload["r"].first["du"];
+      this.isSuperGreenpass = true;
     }
     if (payload.containsKey("v")) {
       this.vaccineType = payload["v"].first["mp"];
@@ -188,12 +191,14 @@ class GreenPass {
       this.dateOfVaccination = payload["v"].first["dt"];
       this.totalSeriesOfDoses = payload["v"].first["sd"];
       this.ci = payload["v"].first["ci"];
+      this.isSuperGreenpass = true;
     }
     if (payload.containsKey("t")) {
       this.ci = payload["t"].first["ci"];
       this.dateTimeOfSampleCollection = payload["t"].first["sc"];
       this.testResult = payload["t"].first["tr"];
       this.typeOfTest = payload["t"].first["tt"];
+      this.isSuperGreenpass = false;
     }
 
     this.version = payload["ver"];
@@ -406,6 +411,7 @@ class GreenPass {
     }
     return {"result": result, "message": message};
   }
+
 
   Future<dynamic> validateGreenpass(var payload) async {
     if (payload.containsKey("r")) {
